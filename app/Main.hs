@@ -8,21 +8,21 @@ import Data.Maybe
 import Control.Exception.Base
 
 letters :: [Char]
-letters = "abcdefghijklmnopqrstuvwxyz"
+letters = cycle ['a'..'z']
 
 countAppearance :: [Char] -> Char -> (Int, Char)
 countAppearance t s = (length $ elemIndices s t, s)
 
-findE :: String -> Char
-findE t =  snd . maximum $ fmap (countAppearance t) letters
+findShiftToE :: String -> Char
+findShiftToE t = snd . maximum $ fmap (countAppearance t) $ take 26 letters
 
 transChar :: Int -> Char -> Char
-transChar d c
-  | elem c letters = letters !! (((+) (0-d) $ fromJust $ elemIndex c letters) `mod` 26)
-  | otherwise      = id c
+transChar shift c
+  | elem c $ take 26 letters = head $ drop (shift `mod` 26) $ dropWhile (/=c) letters
+  | otherwise      = c
 
 decryptWithGuess :: String -> String
-decryptWithGuess t =  fmap (transChar $ -4 +( fromJust (elemIndex (findE t) letters))) t
+decryptWithGuess t =  fmap (transChar $ -4 +( fromJust (elemIndex (findShiftToE t) letters))) t
 
 encryptWith ::Int -> String -> String
 encryptWith d text =  fmap (transChar (-d)) text
@@ -38,5 +38,4 @@ main = do
                                                 hPutStr stderr ("Warning: " ++ filename ++ ": " ++ err)
                                                 return "")
   let t = decryptWithGuess file
-  putStrLn t
-  putStrLn . encryptWith 5 $ t
+  writeFile "encSecret.txt" $ encryptWith 5 t
